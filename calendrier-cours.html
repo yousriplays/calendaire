@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Mon calendrier de session — Automne 2026</title>
+<style>
+:root{
+  --bg: #FBF6EE;
+  --panel: #FFFFFF;
+  --ink: #2B2440;
+  --ink-soft: #5B5270;
+  --plum: #6B3FA0;
+  --plum-deep: #4A2A73;
+  --coral: #F2684B;
+  --gold: #E8A93B;
+  --teal: #1E9E8C;
+  --line: #E6DCC8;
+  --danger-bg: #FFF0EC;
+  --danger-ink: #B23A20;
+  --radius: 26px;
+  --shadow: 0 10px 30px rgba(74,42,115,0.12);
+  font-size: 20px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 8% 12%, rgba(232,169,59,0.14), transparent 40%),
+    radial-gradient(circle at 92% 85%, rgba(107,63,160,0.10), transparent 45%);
+  color: var(--ink);
+  font-family: "Georgia", "Iowan Old Style", "Palatino Linotype", serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+h1,h2,h3,.disp{
+  font-family: "Avenir Next", "Segoe UI", -apple-system, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+button, select, input{ font-family: inherit; }
+
+/* ---------- Header ---------- */
+header.top{
+  padding: 34px 5vw 20px;
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:20px;
+}
+header.top .title h1{
+  font-size: 2.6rem;
+  margin:0 0 6px 0;
+  color: var(--plum-deep);
+}
+header.top .title p{
+  margin:0; font-size:1.15rem; color:var(--ink-soft);
+}
+.session-pill{
+  background: var(--plum);
+  color:#fff;
+  padding: 12px 22px;
+  border-radius: 100px;
+  font-size: 1.1rem;
+  font-weight:700;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Notification banner ---------- */
+#notifBanner{
+  display:none;
+  margin: 0 5vw 20px;
+  background: var(--danger-bg);
+  border: 3px solid var(--coral);
+  color: var(--danger-ink);
+  border-radius: var(--radius);
+  padding: 22px 28px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  align-items:center;
+  gap:18px;
+  box-shadow: var(--shadow);
+}
+#notifBanner .bell{ font-size:2rem; }
+#notifBanner button{
+  margin-left:auto;
+  background: var(--coral);
+  color:#fff;
+  border:none;
+  border-radius: 100px;
+  padding: 10px 20px;
+  font-size:1rem;
+  font-weight:800;
+  cursor:pointer;
+}
+
+/* ---------- Tabs ---------- */
+nav.tabs{
+  display:flex; gap:14px; flex-wrap:wrap;
+  padding: 0 5vw 24px;
+}
+nav.tabs button{
+  border: 3px solid var(--plum);
+  background: var(--panel);
+  color: var(--plum-deep);
+  padding: 16px 28px;
+  border-radius: 100px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  cursor:pointer;
+  transition: transform .12s ease, background .15s ease, color .15s ease;
+}
+nav.tabs button:hover{ transform: translateY(-2px); }
+nav.tabs button.active{
+  background: var(--plum);
+  color:#fff;
+}
+
+main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
+
+.panel{
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
+  border: 1px solid var(--line);
+}
+
+/* ---------- Upcoming list ---------- */
+#upcomingSection h2{
+  font-size: 2rem; color: var(--plum-deep); margin:0 0 20px 0;
+}
+.upcoming-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 22px;
+}
+.upcoming-card{
+  border-radius: 22px;
+  padding: 24px 26px;
+  border: 3px solid var(--line);
+  position: relative;
+  overflow:hidden;
+  display:flex; flex-direction:column; gap:10px;
+}
+.upcoming-card.exam{ border-color: var(--coral); background: linear-gradient(180deg, #FFF7F4, #FFFFFF); }
+.upcoming-card.quiz{ border-color: var(--gold); background: linear-gradient(180deg, #FFFBF0, #FFFFFF); }
+.upcoming-card.other{ border-color: var(--teal); background: linear-gradient(180deg, #F0FBF9, #FFFFFF); }
+.upcoming-card .tag{
+  align-self:flex-start;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 100px;
+  color:#fff;
+}
+.exam .tag{ background: var(--coral); }
+.quiz .tag{ background: var(--gold); color:#4A3400; }
+.other .tag{ background: var(--teal); }
+.upcoming-card h3{
+  margin:0; font-size: 1.5rem; color: var(--ink);
+}
+.upcoming-card .course{ font-size: 1.1rem; color: var(--ink-soft); font-weight:700;}
+.upcoming-card .when{ font-size: 1.25rem; font-weight:800; color: var(--plum-deep); }
+.upcoming-card .countdown{
+  font-size: 1.6rem; font-weight:900; color: var(--coral);
+}
+.upcoming-card .weight{
+  position:absolute; top:20px; right:22px;
+  font-size:1.3rem; font-weight:900; color: var(--plum);
+}
+
+/* ---------- Calendar controls ---------- */
+.cal-controls{
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  margin-bottom: 18px;
+}
+.cal-controls .nav-btns{ display:flex; gap:8px; align-items:center; }
+.cal-controls button.navbtn{
+  width:44px; height:44px; border-radius:50%;
+  border: 2px solid var(--plum); background:#fff; color:var(--plum-deep);
+  font-size:1.3rem; font-weight:900; cursor:pointer; flex-shrink:0;
+}
+.cal-controls button.today{
+  border: 2px solid var(--teal); background:#fff; color:var(--teal);
+  padding: 9px 16px; border-radius:100px; font-size:0.95rem; font-weight:800; cursor:pointer;
+}
+.cal-controls h2{
+  font-size: clamp(1.1rem, 3vw, 1.8rem);
+  margin:0; color:var(--plum-deep);
+  text-align:center; flex:1; min-width:0;
+}
+
+.view-switch{ display:flex; gap:8px; flex-shrink:0; }
+.view-switch button{
+  border:2px solid var(--line); background:#fff; color:var(--ink-soft);
+  padding:8px 14px; border-radius:100px; font-size:0.9rem; font-weight:800; cursor:pointer;
+}
+.view-switch button.active{ border-color:var(--gold); background: var(--gold); color:#4A3400; }
+
+/* ---------- Calendar scroll wrapper ---------- */
+.cal-scroll{
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+/* ---------- Month grid ---------- */
+.month-grid{
+  display:grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 560px;   /* floor so cells don't collapse to nothing */
+}
+.dow{
+  text-align:center; font-weight:800; color:var(--ink-soft);
+  font-size: clamp(0.7rem, 1.5vw, 1rem); padding-bottom:6px;
+}
+.day-cell{
+  min-height: 100px;
+  background: #FEFCF7;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 7px 6px;
+  display:flex; flex-direction:column; gap:4px;
+  position:relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.day-cell.otherMonth{ opacity:0.35; }
+.day-cell.today{ border: 2px solid var(--teal); background:#F0FBF9; }
+.day-cell .num{ font-weight:900; font-size: clamp(0.75rem, 1.8vw, 1.1rem); color:var(--ink); }
+.evt-chip{
+  font-size: clamp(0.62rem, 1.2vw, 0.82rem);
+  font-weight:800;
+  border-radius:7px;
+  padding: 3px 5px;
+  color:#fff;
+  cursor:pointer;
+  line-height:1.2;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.evt-chip.exam{ background: var(--coral); }
+.evt-chip.quiz{ background: var(--gold); color:#4A3400; }
+.evt-chip.other{ background: var(--teal); }
+
+/* ---------- Week / Day view ---------- */
+.week-grid{ display:grid; grid-template-columns: 60px repeat(7,minmax(0,1fr)); gap:4px; min-width:560px; }
+
+.day-grid{ display:grid; grid-template-columns: 80px 1fr; gap:6px; }
+.time-label{ font-size:0.85rem; color:var(--ink-soft); text-align:right; padding-right:8px; }
+.week-head, .day-head{
+  font-weight:800; text-align:center; padding:10px 4px; border-radius:12px; font-size:1.05rem;
+}
+.week-head.today, .day-head.today{ background: var(--teal); color:#fff; }
+.hour-row{ min-height: 64px; border-top:1px solid var(--line); position:relative; }
+.week-col, .day-col{ position:relative; border-left:1px solid var(--line); }
+.week-evt, .day-evt{
+  position:absolute; left:4px; right:4px;
+  border-radius:12px; padding:6px 10px; color:#fff; font-weight:800; font-size:0.95rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  cursor:pointer; overflow:hidden;
+}
+.allday-note{
+  font-size:0.95rem; margin-top:6px; padding:8px; border-radius:10px; font-weight:800; color:#4A3400; background:#FFF3D6;
+}
+
+/* ---------- Stats ---------- */
+.stats-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
+.stat-card{
+  border-radius: 20px; padding: 24px; border: 3px solid var(--line); text-align:center;
+  background: linear-gradient(180deg,#fff,#FBF6EE);
+}
+.stat-card .big{ font-size: 3rem; font-weight:900; color: var(--plum-deep); }
+.stat-card .label{ font-size:1.15rem; color:var(--ink-soft); font-weight:700; margin-top:6px;}
+.course-bars{ margin-top:30px; display:flex; flex-direction:column; gap:16px; }
+.course-bar-row{ display:flex; align-items:center; gap:16px; }
+.course-bar-row .cname{ width: 260px; font-weight:800; font-size:1.05rem; flex-shrink:0; }
+.course-bar-track{ flex:1; background:#F0EAD9; border-radius:100px; height:34px; overflow:hidden; }
+.course-bar-fill{ height:100%; border-radius:100px; display:flex; align-items:center; justify-content:flex-end; padding-right:12px; color:#fff; font-weight:800; }
+
+/* ---------- Courses section ---------- */
+#coursesSection h2{ font-size:2rem; color:var(--plum-deep); margin:0 0 8px; }
+.courses-intro{ font-size:1.1rem; color:var(--ink-soft); margin:0 0 26px; }
+
+/* Spotlight strips */
+.spotlight-strip{
+  margin-bottom: 32px;
+}
+.spotlight-strip h3{
+  font-size:1.35rem; font-weight:800; color:var(--ink);
+  margin:0 0 14px; display:flex; align-items:center; gap:10px;
+}
+.spotlight-strip h3 .badge{
+  font-size:0.95rem; background:var(--plum); color:#fff;
+  padding:4px 14px; border-radius:100px;
+}
+.spotlight-empty{
+  font-size:1.05rem; color:var(--ink-soft); font-style:italic; padding:16px 0;
+}
+.spot-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap:16px;
+}
+.spot-evt{
+  border-radius:18px; padding:18px 20px;
+  display:flex; flex-direction:column; gap:6px;
+  border-left:6px solid transparent;
+  background:#fff;
+  box-shadow: 0 4px 16px rgba(74,42,115,0.08);
+}
+.spot-evt .se-tag{
+  display:inline-block; font-size:0.9rem; font-weight:800; color:#fff;
+  padding:4px 12px; border-radius:100px; align-self:flex-start;
+}
+.spot-evt .se-title{ font-size:1.15rem; font-weight:800; color:var(--ink); margin:0; }
+.spot-evt .se-course{ font-size:0.95rem; color:var(--ink-soft); font-weight:700; }
+.spot-evt .se-when{ font-size:1rem; color:var(--plum-deep); font-weight:800; }
+
+/* Divider */
+.courses-divider{
+  border:none; border-top:2px solid var(--line); margin:10px 0 32px;
+}
+
+/* Course cards grid */
+.courses-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap:26px;
+}
+.course-card{
+  border-radius: 24px;
+  padding: 26px 28px;
+  border: 3px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow);
+  display:flex; flex-direction:column; gap:14px;
+  position:relative; overflow:hidden;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.course-card:hover{ transform:translateY(-4px); box-shadow: 0 18px 44px rgba(74,42,115,0.18); }
+.course-card .cc-top-bar{
+  height: 8px; border-radius:100px;
+  position:absolute; top:0; left:0; right:0;
+}
+.course-card .cc-code{
+  margin-top:8px;
+  font-size:0.95rem; font-weight:800; letter-spacing:.04em;
+  color:#fff; align-self:flex-start;
+  padding:5px 14px; border-radius:100px;
+}
+.course-card .cc-name{
+  font-size:1.3rem; font-weight:800; color:var(--ink); margin:0; line-height:1.3;
+}
+.course-card .cc-group{
+  font-size:1rem; color:var(--ink-soft); font-weight:600;
+}
+.course-card .cc-stats-row{
+  display:flex; gap:12px; flex-wrap:wrap;
+}
+.cc-stat-pill{
+  border-radius:12px; padding:10px 16px; text-align:center;
+  flex:1; min-width:90px;
+  background: #F7F3FC;
+}
+.cc-stat-pill .csp-num{ font-size:1.7rem; font-weight:900; }
+.cc-stat-pill .csp-lbl{ font-size:0.85rem; color:var(--ink-soft); font-weight:700; margin-top:2px; }
+.course-card .cc-next{
+  border-radius:14px; padding:12px 16px;
+  background: #FBF6EE;
+  border:2px solid var(--line);
+  font-size:1rem;
+}
+.cc-next .cnx-label{ font-size:0.85rem; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+.cc-next .cnx-title{ font-weight:800; color:var(--ink); font-size:1.05rem; }
+.cc-next .cnx-when{ font-size:0.95rem; color:var(--plum-deep); font-weight:700; margin-top:2px; }
+.cc-next .cnx-countdown{ font-size:1.05rem; font-weight:900; color:var(--coral); margin-top:4px; }
+.cc-no-next{ font-size:1rem; color:var(--teal); font-weight:700; }
+
+/* Progress bar inside card */
+.cc-progress-label{ display:flex; justify-content:space-between; font-size:0.9rem; font-weight:700; color:var(--ink-soft); }
+.cc-progress-track{ background:#F0EAD9; border-radius:100px; height:12px; overflow:hidden; margin-top:4px; }
+.cc-progress-fill{ height:100%; border-radius:100px; }
+
+/* ---------- Modal ---------- */
+#modalOverlay{
+  display:none; position:fixed; inset:0; background: rgba(43,36,64,0.55);
+  align-items:center; justify-content:center; z-index:100; padding:20px;
+}
+#modalBox{
+  background:#fff; border-radius: 26px; max-width:560px; width:100%;
+  padding: 34px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+#modalBox h3{ font-size:1.8rem; margin:0 0 10px; color:var(--plum-deep); }
+#modalBox p{ font-size:1.2rem; margin:6px 0; }
+#modalBox .close{
+  margin-top:20px; background:var(--plum); color:#fff; border:none; border-radius:100px;
+  padding:14px 26px; font-size:1.1rem; font-weight:800; cursor:pointer; width:100%;
+}
+
+footer{ text-align:center; color:var(--ink-soft); padding: 40px 20px 10px; font-size:1rem; }
+
+/* Larger touch targets, iPad friendly */
+@media (min-width: 768px){
+  :root{ font-size: 21px; }
+}
+@media (max-width: 700px){
+  main{ padding: 0 3vw; }
+  .panel{ padding: 18px 14px; }
+  .day-cell{ min-height: 72px; padding: 5px 4px; }
+  .cal-controls{ gap:8px; }
+  .view-switch button{ padding:6px 10px; font-size:0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="title">
+    <h1>Mon calendrier de session</h1>
+    <p>Faculté des sciences sociales — École de psychologie</p>
+  </div>
+  <div class="session-pill">Automne 2026</div>
+</header>
+
+<div id="notifBanner">
+  <span class="bell">🔔</span>
+  <span id="notifText"></span>
+  <button id="notifDismiss">Fermer</button>
+</div>
+
+<nav class="tabs">
+  <button data-tab="upcoming" class="active">🔔 À venir</button>
+  <button data-tab="calendar">📅 Calendrier</button>
+  <button data-tab="courses">📚 Cours</button>
+  <button data-tab="stats">📊 Statistiques</button>
+</nav>
+
+<main>
+
+  <section id="upcomingSection" class="panel">
+    <h2>Prochains examens et quiz</h2>
+    <div class="upcoming-grid" id="upcomingGrid"></div>
+  </section>
+
+  <section id="calendarSection" class="panel" style="display:none;">
+    <div class="cal-controls">
+      <div class="nav-btns">
+        <button class="navbtn" id="prevBtn">‹</button>
+        <button class="today" id="todayBtn">Aujourd'hui</button>
+        <button class="navbtn" id="nextBtn">›</button>
+      </div>
+      <h2 id="calTitle"></h2>
+      <div class="view-switch">
+        <button data-view="month" class="active">Mois</button>
+        <button data-view="week">Semaine</button>
+        <button data-view="day">Jour</button>
+      </div>
+    </div>
+    <div class="cal-scroll"><div id="calBody"></div></div>
+  </section>
+
+  <section id="statsSection" class="panel" style="display:none;">
+    <h2 style="font-size:2rem;color:var(--plum-deep);margin-top:0;">Statistiques de la session</h2>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="course-bars" id="courseBars"></div>
+  </section>
+
+  <section id="coursesSection" class="panel" style="display:none;">
+    <h2>📚 Mes cours — Automne 2026</h2>
+    <p class="courses-intro">6 cours · Faculté des sciences sociales — École de psychologie</p>
+
+    <!-- This Week spotlight -->
+    <div class="spotlight-strip" id="weekSpotlight"></div>
+
+    <!-- This Month spotlight -->
+    <div class="spotlight-strip" id="monthSpotlight"></div>
+
+    <hr class="courses-divider">
+
+    <!-- All course cards -->
+    <div class="courses-grid" id="coursesGrid"></div>
+  </section>
+
+</main>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3 id="modalTitle"></h3>
+    <p id="modalCourse"></p>
+    <p id="modalWhen"></p>
+    <p id="modalWeight"></p>
+    <p id="modalLoc"></p>
+    <button class="close" id="modalClose">Fermer</button>
+  </div>
+</div>
+
+<footer>Fait avec soin pour t'aider à ne manquer aucun examen. ✨</footer>
+
+<script>
+/* ============== DATA ============== */
+const courses = {
+  "PSY-2105": {name:"Développement social-affectif des 0-12 ans", color:"#6B3FA0"},
+  "PSY-3001": {name:"Histoire critique de la psychologie", color:"#1E9E8C"},
+  "MAT-1904": {name:"Méthodes quantitatives I", color:"#E8A93B"},
+  "PSY-1002": {name:"Neuropsychologie et neurosciences I", color:"#F2684B"},
+  "PSY-1104": {name:"Psychologie de la famille", color:"#3D7DD9"},
+  "PSY-1001": {name:"Théories de la personnalité", color:"#C24B8E"},
+};
+
+// helper to build Date objects (year 2026)
+function d(m,day,h=0,mi=0){ return new Date(2026,m-1,day,h,mi); }
+
+const events = [
+  // PSY-2105
+  {course:"PSY-2105", type:"exam", title:"Examen intra-session 1", weight:"30 %", start:d(10,9,21,0), end:d(10,10,22,0), loc:"En ligne"},
+  {course:"PSY-2105", type:"exam", title:"Examen intra-session 2", weight:"35 %", start:d(11,13,22,0), end:d(11,14,23,0), loc:"En ligne"},
+  {course:"PSY-2105", type:"exam", title:"Examen final", weight:"35 %", start:d(12,11,22,0), end:d(12,12,23,0), loc:"En ligne"},
+
+  // MAT-1904
+  {course:"MAT-1904", type:"quiz", title:"Quiz 1 (semaines 2-3)", weight:"5 %", start:d(9,16,13,30), end:d(9,21,22,0), loc:"En ligne"},
+  {course:"MAT-1904", type:"quiz", title:"Quiz 2 (semaines 4-5)", weight:"5 %", start:d(9,30,13,30), end:d(10,5,22,0), loc:"En ligne"},
+  {course:"MAT-1904", type:"quiz", title:"Quiz 3 (semaine 6)", weight:"5 %", start:d(10,7,13,30), end:d(10,12,22,0), loc:"En ligne"},
+  {course:"MAT-1904", type:"quiz", title:"Quiz 4 (semaines 8-9)", weight:"5 %", start:d(11,4,14,30), end:d(11,9,23,0), loc:"En ligne"},
+  {course:"MAT-1904", type:"quiz", title:"Quiz 5 (semaines 10-11)", weight:"5 %", start:d(11,18,14,30), end:d(11,23,23,0), loc:"En ligne"},
+  {course:"MAT-1904", type:"quiz", title:"Quiz 6 (semaines 12-13)", weight:"5 %", start:d(12,2,14,30), end:d(12,7,23,0), loc:"En ligne"},
+  {course:"MAT-1904", type:"exam", title:"Examen 1", weight:"35 %", start:d(10,14,13,30), end:d(10,14,16,30), loc:"VCH-2850 (local habituel)"},
+  {course:"MAT-1904", type:"exam", title:"Examen 2", weight:"35 %", start:d(12,9,14,30), end:d(12,9,17,30), loc:"VCH-2850 (local habituel)"},
+
+  // PSY-1002
+  {course:"PSY-1002", type:"quiz", title:"Quiz 1", weight:"5 %", start:d(9,16,20,30), end:d(9,16,20,40), loc:"DKN-1157"},
+  {course:"PSY-1002", type:"quiz", title:"Quiz 2", weight:"5 %", start:d(10,7,20,30), end:d(10,7,20,40), loc:"DKN-1157"},
+  {course:"PSY-1002", type:"quiz", title:"Quiz 3", weight:"5 %", start:d(11,11,21,30), end:d(11,11,21,40), loc:"DKN-1157"},
+  {course:"PSY-1002", type:"quiz", title:"Quiz 4", weight:"5 %", start:d(11,25,21,30), end:d(11,25,21,40), loc:"DKN-1157"},
+  {course:"PSY-1002", type:"exam", title:"Examen 1", weight:"40 %", start:d(10,21,20,30), end:d(10,21,23,20), loc:"En classe, DKN-1157"},
+  {course:"PSY-1002", type:"exam", title:"Examen 2", weight:"40 %", start:d(12,9,21,30), end:d(12,10,0,20), loc:"En classe, DKN-1157"},
+
+  // PSY-1104
+  {course:"PSY-1104", type:"quiz", title:"Exercice en ligne 1 (thème 5)", weight:"10 %", start:d(9,28,13,30), end:d(10,5,4,55), loc:"En ligne"},
+  {course:"PSY-1104", type:"quiz", title:"Exercice en ligne 2 (thème 9)", weight:"10 %", start:d(11,2,14,30), end:d(11,9,5,55), loc:"En ligne"},
+  {course:"PSY-1104", type:"exam", title:"Examen en ligne 1", weight:"40 %", start:d(10,8,11,0), end:d(10,9,22,0), loc:"En ligne"},
+  {course:"PSY-1104", type:"exam", title:"Examen final", weight:"40 %", start:d(12,3,12,0), end:d(12,4,23,0), loc:"En ligne"},
+
+  // PSY-3001 (dates from weekly schedule — official dates TBD but week is known)
+  {course:"PSY-3001", type:"exam",  title:"Examen 1",                weight:"37,5 %", start:d(10,19,9,0),  end:d(10,19,23,0),  loc:"En classe (date exacte à confirmer)"},
+  {course:"PSY-3001", type:"exam",  title:"Examen final",            weight:"42,5 %", start:d(12,14,9,0),  end:d(12,14,23,0),  loc:"En classe (date exacte à confirmer)"},
+  {course:"PSY-3001", type:"other", title:"Conférence 1 + discussion",weight:"15 %",  start:d(11,9,9,0),   end:d(11,9,23,0),   loc:"Date à confirmer"},
+  {course:"PSY-3001", type:"other", title:"Conférence 2 + discussion",weight:"15 %",  start:d(11,30,9,0),  end:d(11,30,23,0),  loc:"Date à confirmer"},
+  {course:"PSY-3001", type:"other", title:"Présence aux conférences", weight:"5 %",   start:d(11,9,9,0),   end:d(11,30,23,0),  loc:"Date à confirmer"},
+
+  // PSY-1001
+  {course:"PSY-1001", type:"quiz",  title:"Quiz du module 1",   weight:"3 %",  start:d(9,14,11,0),  end:d(9,21,4,59),   loc:"En ligne"},
+  {course:"PSY-1001", type:"quiz",  title:"Quiz du module 2",   weight:"3 %",  start:d(9,28,11,0),  end:d(10,5,4,59),   loc:"En ligne"},
+  {course:"PSY-1001", type:"quiz",  title:"Quiz du module 3",   weight:"3 %",  start:d(10,19,11,0), end:d(10,26,4,59),  loc:"En ligne"},
+  {course:"PSY-1001", type:"quiz",  title:"Quiz du module 4",   weight:"3 %",  start:d(11,9,12,0),  end:d(11,16,5,59),  loc:"En ligne"},
+  {course:"PSY-1001", type:"quiz",  title:"Quiz du module 5",   weight:"3 %",  start:d(11,30,12,0), end:d(12,7,5,59),   loc:"En ligne"},
+  {course:"PSY-1001", type:"exam",  title:"Examen intra 1",     weight:"25 %", start:d(10,8,11,0),  end:d(10,9,4,59),   loc:"En ligne"},
+  {course:"PSY-1001", type:"exam",  title:"Examen intra 2",     weight:"25 %", start:d(11,19,12,0), end:d(11,20,5,59),  loc:"En ligne"},
+  {course:"PSY-1001", type:"quiz",  title:"Vignette clinique",  weight:"5 %",  start:d(11,23,12,0), end:d(11,30,5,59),  loc:"En ligne"},
+  {course:"PSY-1001", type:"exam",  title:"Examen final",       weight:"30 %", start:d(12,10,12,0), end:d(12,11,5,59),  loc:"En ligne"},
+];
+
+events.forEach(e=>{ e.courseName = courses[e.course].name; e.color = courses[e.course].color; });
+events.sort((a,b)=>a.start-b.start);
+
+const NOW = new Date(); // always the real current date & time
+
+/* ============== TABS ============== */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('upcomingSection').style.display  = btn.dataset.tab==='upcoming'  ? 'block':'none';
+    document.getElementById('calendarSection').style.display  = btn.dataset.tab==='calendar'  ? 'block':'none';
+    document.getElementById('coursesSection').style.display   = btn.dataset.tab==='courses'   ? 'block':'none';
+    document.getElementById('statsSection').style.display     = btn.dataset.tab==='stats'     ? 'block':'none';
+    if(btn.dataset.tab==='calendar') renderCalendar();
+    if(btn.dataset.tab==='stats')    renderStats();
+    if(btn.dataset.tab==='courses')  renderCourses();
+  });
+});
+
+/* ============== UPCOMING ============== */
+function fmtDate(dt){
+  return dt.toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long'}) + ' à ' +
+    dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+function daysUntil(dt){
+  const ms = dt - NOW;
+  return Math.ceil(ms / (1000*60*60*24));
+}
+function renderUpcoming(){
+  const grid = document.getElementById('upcomingGrid');
+  const upcoming = events.filter(e=>e.start >= NOW).slice(0,8);
+  if(upcoming.length===0){
+    grid.innerHTML = '<p style="font-size:1.3rem;">Aucune évaluation à venir. Bravo, tu es à jour ! 🎉</p>';
+    return;
+  }
+  grid.innerHTML = upcoming.map(e=>{
+    const du = daysUntil(e.start);
+    const countdownText = du <= 0 ? "C'est aujourd'hui !" : (du===1? "Demain !" : `Dans ${du} jours`);
+    return `<div class="upcoming-card ${e.type}">
+      <span class="weight">${e.weight}</span>
+      <span class="tag">${e.type==='exam'?'Examen':'Quiz'}</span>
+      <h3>${e.title}</h3>
+      <div class="course">${e.courseName} (${e.course})</div>
+      <div class="when">🗓️ ${fmtDate(e.start)}</div>
+      <div class="countdown">⏳ ${countdownText}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============== NOTIFICATION BANNER ============== */
+function renderNotifBanner(){
+  const soon = events.filter(e=>{
+    const du = daysUntil(e.start);
+    return e.start>=NOW && du<=3;
+  });
+  const banner = document.getElementById('notifBanner');
+  if(soon.length>0){
+    const first = soon[0];
+    const du = daysUntil(first.start);
+    const when = du<=0 ? "aujourd'hui" : (du===1?"demain":`dans ${du} jours`);
+    document.getElementById('notifText').textContent =
+      `${first.type==='exam'?'Examen':'Quiz'} — ${first.title} (${first.course}) ${when} ! ${soon.length>1? 'Et '+(soon.length-1)+' autre(s) évaluation(s) bientôt.':''}`;
+    banner.style.display = 'flex';
+    if(window.Notification && Notification.permission==='granted'){
+      new Notification('Évaluation à venir', {body: document.getElementById('notifText').textContent});
+    }
+  }
+}
+document.getElementById('notifDismiss').addEventListener('click',()=>{
+  document.getElementById('notifBanner').style.display='none';
+});
+if(window.Notification && Notification.permission!=='granted' && Notification.permission!=='denied'){
+  Notification.requestPermission();
+}
+
+/* ============== CALENDAR ============== */
+let currentView = 'month';
+let cursor = new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+
+document.querySelectorAll('.view-switch button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.view-switch button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView = btn.dataset.view;
+    renderCalendar();
+  });
+});
+document.getElementById('prevBtn').addEventListener('click',()=>{ navigate(-1); });
+document.getElementById('nextBtn').addEventListener('click',()=>{ navigate(1); });
+document.getElementById('todayBtn').addEventListener('click',()=>{
+  cursor = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+  renderCalendar();
+});
+
+function navigate(dir){
+  if(currentView==='month'){
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth()+dir, 1);
+  } else if(currentView==='week'){
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()+dir*7);
+  } else {
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()+dir);
+  }
+  renderCalendar();
+}
+
+function sameDay(a,b){
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+function renderCalendar(){
+  const title = document.getElementById('calTitle');
+  const body = document.getElementById('calBody');
+  if(currentView==='month'){
+    title.textContent = cursor.toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+    body.innerHTML = renderMonth();
+  } else if(currentView==='week'){
+    const start = startOfWeek(cursor);
+    const end = new Date(start); end.setDate(end.getDate()+6);
+    title.textContent = `${start.getDate()} ${start.toLocaleDateString('fr-FR',{month:'short'})} — ${end.getDate()} ${end.toLocaleDateString('fr-FR',{month:'short'})}`;
+    body.innerHTML = renderWeek(start);
+  } else {
+    title.textContent = cursor.toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long'});
+    body.innerHTML = renderDay(cursor);
+  }
+  attachEvtHandlers();
+}
+
+function startOfWeek(dt){
+  const day = dt.getDay(); // 0=sun
+  const diff = (day===0? -6 : 1) - day;
+  const s = new Date(dt); s.setDate(dt.getDate()+diff);
+  return new Date(s.getFullYear(), s.getMonth(), s.getDate());
+}
+
+function renderMonth(){
+  const y = cursor.getFullYear(), m = cursor.getMonth();
+  const firstOfMonth = new Date(y,m,1);
+  const gridStart = startOfWeek(firstOfMonth);
+  const dows = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  let html = '<div class="month-grid">';
+  dows.forEach(dw=> html += `<div class="dow">${dw}</div>`);
+  for(let i=0;i<42;i++){
+    const day = new Date(gridStart); day.setDate(gridStart.getDate()+i);
+    const isOther = day.getMonth()!==m;
+    const isToday = sameDay(day,NOW);
+    const dayEvents = events.filter(e=>sameDay(e.start,day) || (e.end && day>=stripTime(e.start) && day<=stripTime(e.end) && diffDays(e.start,e.end) <= 10 && e.type!=='exam-multi-skip'));
+    html += `<div class="day-cell ${isOther?'otherMonth':''} ${isToday?'today':''}">
+      <div class="num">${day.getDate()}</div>
+      ${dayEvents.slice(0,3).map(e=>`<div class="evt-chip ${e.type}" data-idx="${events.indexOf(e)}">${e.type==='exam'?'📕':'📝'} ${e.title}</div>`).join('')}
+      ${dayEvents.length>3?`<div style="font-size:0.85rem;color:var(--ink-soft);">+${dayEvents.length-3} autre(s)</div>`:''}
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+function stripTime(dt){ return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()); }
+function diffDays(a,b){ return Math.round((stripTime(b)-stripTime(a))/(1000*60*60*24)); }
+
+function renderWeek(start){
+  const dows = [];
+  for(let i=0;i<7;i++){ const d2=new Date(start); d2.setDate(start.getDate()+i); dows.push(d2); }
+  let html = '<div class="week-grid">';
+  html += '<div></div>';
+  dows.forEach(dd=>{
+    html += `<div class="week-head ${sameDay(dd,NOW)?'today':''}">${dd.toLocaleDateString('fr-FR',{weekday:'short'})}<br>${dd.getDate()}</div>`;
+  });
+  const hours = Array.from({length:17},(_,i)=>i+7); // 7h to 23h
+  hours.forEach(h=>{
+    html += `<div class="time-label">${h}h</div>`;
+    dows.forEach(dd=>{
+      const dayStr = dd.toDateString();
+      const evs = events.filter(e=> sameDay(e.start,dd) && e.start.getHours()===h );
+      html += `<div class="week-col hour-row">`;
+      evs.forEach(e=>{
+        const idx = events.indexOf(e);
+        html += `<div class="week-evt" data-idx="${idx}" style="background:${e.color}; top:2px;">${e.type==='exam'?'📕':'📝'} ${e.title}</div>`;
+      });
+      html += `</div>`;
+    });
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderDay(day){
+  let html = `<div class="day-grid">`;
+  html += `<div></div><div class="day-head today">${day.toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long'})}</div>`;
+  const hours = Array.from({length:17},(_,i)=>i+7);
+  hours.forEach(h=>{
+    html += `<div class="time-label">${h}h</div>`;
+    const evs = events.filter(e=> sameDay(e.start,day) && e.start.getHours()===h );
+    html += `<div class="day-col hour-row">`;
+    evs.forEach(e=>{
+      const idx = events.indexOf(e);
+      html += `<div class="day-evt" data-idx="${idx}" style="background:${e.color}; top:2px;">${e.type==='exam'?'📕':'📝'} ${e.title} — ${e.courseName}</div>`;
+    });
+    html += `</div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function attachEvtHandlers(){
+  document.querySelectorAll('[data-idx]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const e = events[parseInt(el.dataset.idx)];
+      openModal(e);
+    });
+  });
+}
+
+function openModal(e){
+  document.getElementById('modalTitle').textContent = (e.type==='exam'?'📕 ':'📝 ') + e.title;
+  document.getElementById('modalCourse').textContent = `Cours : ${e.courseName} (${e.course})`;
+  document.getElementById('modalWhen').textContent = `Du ${fmtDate(e.start)} au ${fmtDate(e.end)}`;
+  document.getElementById('modalWeight').textContent = `Pondération : ${e.weight}`;
+  document.getElementById('modalLoc').textContent = `Lieu : ${e.loc}`;
+  document.getElementById('modalOverlay').style.display = 'flex';
+}
+document.getElementById('modalClose').addEventListener('click',()=>{
+  document.getElementById('modalOverlay').style.display='none';
+});
+document.getElementById('modalOverlay').addEventListener('click',(ev)=>{
+  if(ev.target.id==='modalOverlay') document.getElementById('modalOverlay').style.display='none';
+});
+
+/* ============== STATS ============== */
+function renderStats(){
+  const grid = document.getElementById('statsGrid');
+  const totalEvents = events.length;
+  const totalExams = events.filter(e=>e.type==='exam').length;
+  const totalQuiz = events.filter(e=>e.type==='quiz').length;
+  const done = events.filter(e=>e.end < NOW).length;
+  const remaining = totalEvents - done;
+
+  grid.innerHTML = `
+    <div class="stat-card"><div class="big">${totalEvents}</div><div class="label">Évaluations au total</div></div>
+    <div class="stat-card"><div class="big">${totalExams}</div><div class="label">Examens</div></div>
+    <div class="stat-card"><div class="big">${totalQuiz}</div><div class="label">Quiz / exercices</div></div>
+    <div class="stat-card"><div class="big">${remaining}</div><div class="label">Évaluations restantes</div></div>
+  `;
+
+  const bars = document.getElementById('courseBars');
+  let html = '<h3 style="font-size:1.4rem;color:var(--plum-deep);">Nombre d’évaluations par cours</h3>';
+  const maxCount = Math.max(...Object.keys(courses).map(c=>events.filter(e=>e.course===c).length));
+  Object.keys(courses).forEach(c=>{
+    const count = events.filter(e=>e.course===c).length;
+    const pct = Math.round((count/maxCount)*100);
+    html += `<div class="course-bar-row">
+      <div class="cname">${c}</div>
+      <div class="course-bar-track"><div class="course-bar-fill" style="width:${pct}%; background:${courses[c].color};">${count}</div></div>
+    </div>`;
+  });
+  bars.innerHTML = html;
+}
+
+/* ============== COURSES ============== */
+
+// Extra metadata per course (group, chapter count, total evaluations)
+const courseMeta = {
+  "PSY-2105": {
+    group: "88201",
+    chapters: [
+      "1 — Développement social et émotionnel de l'enfant",
+      "2 — Tempérament et développement social et émotionnel",
+      "3 — La régulation émotionnelle (A, B, C)",
+      "4 — Intervention fondée sur les principes de l'attachement",
+      "5 — Le divorce, séparations conjugales et développement socio-émotionnel",
+      "6 — L'expérience de garderie et le développement social et émotionnel",
+      "7 — Les relations avec les pairs",
+      "8 — Le concept de résilience",
+      "9 — Évènements générationnels et effets de cohorte",
+      "10 — Évaluation et intervention auprès des enfants",
+      "11 — L'adversité précoce et le développement neuropsychologique"
+    ]
+  },
+  "PSY-3001": {
+    group: "88208",
+    chapters: [
+      "Sem. 1 — Introduction à l'histoire de la psychologie",
+      "Sem. 3 — Origines philosophiques de la psychologie",
+      "Sem. 4 — De Descartes à Darwin",
+      "Sem. 5 — Naissance de la psychologie scientifique",
+      "Sem. 9 — Psychanalyse et psychologie clinique",
+      "Sem. 10 — Conférence 1 et discussions",
+      "Sem. 11 — Phénoménologie et existentialisme",
+      "Sem. 12 — Psychologie humaniste-existentielle",
+      "Sem. 13 — Conférence 2 et discussions",
+      "Sem. 14 — Histoire de la psychopathologie"
+    ]
+  },
+  "MAT-1904": {
+    group: "85854",
+    chapters: [
+      "Sem. 1 — La statistique en psychologie",
+      "Sem. 2 — Rappels et test Z sur une moyenne",
+      "Sem. 3 — Démarche inférentielle et test t sur une moyenne",
+      "Sem. 4 — Test t de Student sur deux moyennes",
+      "Sem. 5 — Test t : variances hétérogènes et données pairées",
+      "Sem. 6 — Puissance statistique, grandeur d'effet et taille d'échantillon",
+      "Sem. 8 — ANOVA à plan simple",
+      "Sem. 9 — Comparaisons multiples en ANOVA",
+      "Sem. 10 — ANOVA à mesures répétées",
+      "Sem. 11 — Tests pour données non-normales",
+      "Sem. 12 — Corrélation de Pearson et Spearman",
+      "Sem. 13 — Régression linéaire simple"
+    ]
+  },
+  "PSY-1002": {
+    group: "88192",
+    chapters: [
+      "Cours 1 — Introduction à la neurophysiologie",
+      "Cours 2 — Le neurone et la communication inter-neuronale (1)",
+      "Cours 3 — Le neurone et la communication inter-neuronale (2)",
+      "Cours 4 — Le neurone et la communication inter-neuronale (3)",
+      "Cours 5 — L'apprentissage et la plasticité synaptique",
+      "Cours 6 — Système nerveux périphérique et réponse de stress",
+      "Cours 7 — Système nerveux central (1)",
+      "Cours 8 — Système nerveux central (2)",
+      "Cours 9 — Vision, audition et système vestibulaire",
+      "Cours 10 — Somesthésie et nociception",
+      "Cours 11 — Gustation et Olfaction",
+      "Cours 12 — Système moteur et contrôle exécutif"
+    ]
+  },
+  "PSY-1104": {
+    group: "88198",
+    chapters: [
+      "Thème 1 — Regard socio-démographique et culturel des familles",
+      "Thème 2 — L'approche systémique",
+      "Thème 3 — L'approche développementale de la famille",
+      "Thème 4 — Le modèle écologique",
+      "Thème 5 — Diversité des structures familiales et coparentalité",
+      "Thème 6 — Le développement du lien d'attachement",
+      "Thème 7 — L'adoption internationale et la relation parent-enfant",
+      "Thème 8 — La maltraitance",
+      "Thème 9 — La séparation",
+      "Thème 10 — Avoir un enfant prématuré",
+      "Thème 11 — L'évaluation du système familial",
+      "Thème 12 — Les politiques et services pour mieux soutenir les familles"
+    ]
+  },
+  "PSY-1001": {
+    group: "88190",
+    chapters: [
+      "Cours 1 — Notions de base / Écoles de pensées",
+      "Cours 2 — Allport / Cattell / Eysenck",
+      "Cours 3 — Big-Five / Cloninger",
+      "Cours 4 — Perspective de l'apprentissage",
+      "Cours 5 — Perspective cognitive",
+      "Cours 6 — Développement de la personnalité",
+      "Cours 7 — La personne",
+      "Cours 8 — Perspective psychanalytique",
+      "Cours 9 — Fonagy et Kernberg",
+      "Cours 10 — Troubles de la personnalité DSM V-TR / Approches de traitement",
+      "Cours 11 — Modèle alternatif"
+    ]
+  }
+};
+
+function startOfWeekFn(dt){
+  const day = dt.getDay();
+  const diff = (day===0 ? -6 : 1) - day;
+  const s = new Date(dt); s.setDate(dt.getDate()+diff);
+  return new Date(s.getFullYear(), s.getMonth(), s.getDate());
+}
+
+function fmtShortDate(dt){
+  return dt.toLocaleDateString('fr-FR',{weekday:'short', day:'numeric', month:'short'});
+}
+
+function renderCourses(){
+  // --- Week bounds ---
+  const weekStart = startOfWeekFn(NOW);
+  const weekEnd   = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+6);
+  weekEnd.setHours(23,59,59);
+
+  // --- Month bounds ---
+  const monthStart = new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+  const monthEnd   = new Date(NOW.getFullYear(), NOW.getMonth()+1, 0, 23, 59, 59);
+
+  // Events that START this week
+  const weekEvts  = events.filter(e => e.start >= weekStart  && e.start <= weekEnd);
+  // Events that START this month
+  const monthEvts = events.filter(e => e.start >= monthStart && e.start <= monthEnd);
+
+  // ---- Week Spotlight ----
+  const ws = document.getElementById('weekSpotlight');
+  if(weekEvts.length === 0){
+    ws.innerHTML = `<h3>📆 Cette semaine <span class="badge">0 évaluation</span></h3>
+      <p class="spotlight-empty">Aucune évaluation cette semaine. Profites-en pour avancer tes lectures ! 🌿</p>`;
+  } else {
+    let spotHtml = `<h3>📆 Cette semaine <span class="badge">${weekEvts.length} évaluation${weekEvts.length>1?'s':''}</span></h3>
+      <div class="spot-grid">`;
+    weekEvts.forEach(e=>{
+      const du = Math.ceil((e.start - NOW)/(1000*60*60*24));
+      const countdownText = du<=0 ? "C'est aujourd'hui !" : (du===1?"Demain !": `Dans ${du} j`);
+      spotHtml += `<div class="spot-evt" style="border-left-color:${e.color}; background:linear-gradient(135deg,${e.color}18,#fff 60%);">
+        <span class="se-tag" style="background:${e.color};">${e.type==='exam'?'📕 Examen':'📝 Quiz'}</span>
+        <div class="se-title">${e.title}</div>
+        <div class="se-course">${e.courseName} (${e.course})</div>
+        <div class="se-when">🗓️ ${fmtShortDate(e.start)} &nbsp;·&nbsp; <strong style="color:var(--coral);">⏳ ${countdownText}</strong></div>
+      </div>`;
+    });
+    spotHtml += '</div>';
+    ws.innerHTML = spotHtml;
+  }
+
+  // ---- Month Spotlight ----
+  const ms = document.getElementById('monthSpotlight');
+  const monthLabel = NOW.toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+  if(monthEvts.length === 0){
+    ms.innerHTML = `<h3>🗓️ Ce mois-ci — ${monthLabel} <span class="badge">0 évaluation</span></h3>
+      <p class="spotlight-empty">Aucune évaluation ce mois-ci.</p>`;
+  } else {
+    let mHtml = `<h3>🗓️ Ce mois-ci — ${monthLabel} <span class="badge">${monthEvts.length} évaluation${monthEvts.length>1?'s':''}</span></h3>
+      <div class="spot-grid">`;
+    monthEvts.forEach(e=>{
+      const du = Math.ceil((e.start - NOW)/(1000*60*60*24));
+      const countdownText = du<=0 ? "C'est aujourd'hui !" : (du===1?"Demain !": `Dans ${du} j`);
+      mHtml += `<div class="spot-evt" style="border-left-color:${e.color}; background:linear-gradient(135deg,${e.color}12,#fff 60%);">
+        <span class="se-tag" style="background:${e.color};">${e.type==='exam'?'📕 Examen':'📝 Quiz'}</span>
+        <div class="se-title">${e.title}</div>
+        <div class="se-course">${e.courseName} (${e.course})</div>
+        <div class="se-when">🗓️ ${fmtShortDate(e.start)} &nbsp;·&nbsp; <strong style="color:var(--coral);">⏳ ${countdownText}</strong></div>
+      </div>`;
+    });
+    mHtml += '</div>';
+    ms.innerHTML = mHtml;
+  }
+
+  // ---- Course Cards ----
+  const grid = document.getElementById('coursesGrid');
+  let cardsHtml = '';
+
+  Object.keys(courses).forEach(code=>{
+    const c        = courses[code];
+    const meta     = courseMeta[code];
+    const courseEvts  = events.filter(e=>e.course===code);
+    const examsCount  = courseEvts.filter(e=>e.type==='exam').length;
+    const quizCount   = courseEvts.filter(e=>e.type==='quiz').length;
+    const doneCount   = courseEvts.filter(e=>e.end < NOW).length;
+    const totalCount  = courseEvts.length;
+    const pct         = totalCount>0 ? Math.round((doneCount/totalCount)*100) : 0;
+    const chapCount   = meta.chapters.length;
+
+    // Next upcoming event for this course
+    const nextEvt = courseEvts.find(e=>e.start >= NOW);
+    let nextHtml = '';
+    if(nextEvt){
+      const du = Math.ceil((nextEvt.start - NOW)/(1000*60*60*24));
+      const countdownText = du<=0 ? "C'est aujourd'hui !" : (du===1?"Demain !": `Dans ${du} jours`);
+      nextHtml = `<div class="cc-next">
+        <div class="cnx-label">Prochaine évaluation</div>
+        <div class="cnx-title">${nextEvt.type==='exam'?'📕':'📝'} ${nextEvt.title}</div>
+        <div class="cnx-when">🗓️ ${fmtShortDate(nextEvt.start)}</div>
+        <div class="cnx-countdown">⏳ ${countdownText}</div>
+      </div>`;
+    } else {
+      nextHtml = `<div class="cc-no-next">✅ Toutes les évaluations sont terminées !</div>`;
+    }
+
+    cardsHtml += `<div class="course-card">
+      <div class="cc-top-bar" style="background:${c.color};"></div>
+      <span class="cc-code" style="background:${c.color};">${code}</span>
+      <div class="cc-name">${c.name}</div>
+      <div class="cc-group">Groupe : ${meta.group} &nbsp;·&nbsp; ${chapCount} chapitres / cours</div>
+
+      <div class="cc-stats-row">
+        <div class="cc-stat-pill">
+          <div class="csp-num" style="color:${c.color};">${totalCount}</div>
+          <div class="csp-lbl">Évaluations</div>
+        </div>
+        <div class="cc-stat-pill">
+          <div class="csp-num" style="color:var(--coral);">${examsCount}</div>
+          <div class="csp-lbl">Examens</div>
+        </div>
+        <div class="cc-stat-pill">
+          <div class="csp-num" style="color:var(--gold);">${quizCount}</div>
+          <div class="csp-lbl">Quiz</div>
+        </div>
+        <div class="cc-stat-pill">
+          <div class="csp-num" style="color:var(--teal);">${doneCount}</div>
+          <div class="csp-lbl">Terminées</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="cc-progress-label">
+          <span>Progression</span>
+          <span>${pct} %</span>
+        </div>
+        <div class="cc-progress-track">
+          <div class="cc-progress-fill" style="width:${pct}%; background:${c.color};"></div>
+        </div>
+      </div>
+
+      ${nextHtml}
+    </div>`;
+  });
+
+  grid.innerHTML = cardsHtml;
+}
+
+/* ============== INIT ============== */
+renderUpcoming();
+renderNotifBanner();
+renderCalendar();
+</script>
+</body>
+</html>
