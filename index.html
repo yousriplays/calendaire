@@ -676,6 +676,24 @@ events.sort((a,b)=>a.start-b.start);
 
 const NOW = new Date(); // always the real current date & time
 
+// Holidays / no-class days
+const holidays = {
+  "2026-09-07": { icon:"🎉", label:"Fête du travail" },
+  "2026-10-05": { icon:"🗳️", label:"Élections provinciales" },
+  "2026-10-12": { icon:"🍂", label:"Action de Grâce" },
+  "2026-10-26": { icon:"📖", label:"Semaine de lecture" },
+  "2026-10-27": { icon:"📖", label:"Semaine de lecture" },
+  "2026-10-28": { icon:"📖", label:"Semaine de lecture" },
+  "2026-10-29": { icon:"📖", label:"Semaine de lecture" },
+  "2026-10-30": { icon:"📖", label:"Semaine de lecture" },
+  "2026-10-31": { icon:"📖", label:"Semaine de lecture" },
+  "2026-11-01": { icon:"📖", label:"Semaine de lecture" },
+};
+function getHoliday(day){
+  const key = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+  return holidays[key] || null;
+}
+
 /* ============== TABS ============== */
 document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -863,6 +881,7 @@ function renderMonth(){
     html += `<div class="day-cell ${isOther?'otherMonth':''} ${isToday?'today':''}">
       <div class="num-row">
         <span class="num">${day.getDate()}</span>
+        ${(()=>{ const h=getHoliday(day); return h?`<span title="${h.label}" style="font-size:0.9rem;cursor:default;">${h.icon}</span>`:''; })()}
         ${contTagsHtml}
       </div>
       ${classChipsHtml}
@@ -1042,8 +1061,9 @@ function renderWeek(start){
     <div class="wv-day-heads">`;
   dows.forEach(dd => {
     const isT = sameDay(dd,NOW);
-    html += `<div class="wv-day-head ${isT?'today':''}">
-      ${dd.toLocaleDateString('fr-FR',{weekday:'short'})}<br>
+    const hol = getHoliday(dd);
+    html += `<div class="wv-day-head ${isT?'today':''}" title="${hol?hol.label:''}">
+      ${dd.toLocaleDateString('fr-FR',{weekday:'short'})} ${hol?hol.icon:''}<br>
       <span style="font-size:1.1rem;">${dd.getDate()}</span>
     </div>`;
   });
