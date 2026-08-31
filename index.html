@@ -229,7 +229,7 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
 }
 .day-cell.otherMonth{ opacity:0.35; }
 .day-cell.today{ border: 2px solid var(--teal); background:#F0FBF9; }
-.day-cell .num{ font-weight:900; font-size: clamp(0.75rem, 1.8vw, 1.1rem); color:var(--ink); }
+.day-cell .num{ font-weight:900; font-size: clamp(0.75rem, 1.8vw, 1.1rem); color:var(--ink); } /* fallback */
 .evt-chip{
   font-size: clamp(0.62rem, 1.2vw, 0.82rem);
   font-weight:800;
@@ -243,6 +243,27 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
 .evt-chip.exam{ background: var(--coral); }
 .evt-chip.quiz{ background: var(--gold); color:#4A3400; }
 .evt-chip.other{ background: var(--teal); }
+
+/* ---------- Day number row (num + continuation dots) ---------- */
+.num-row{
+  display:flex; align-items:center; flex-wrap:wrap; gap:4px;
+  margin-bottom: 2px;
+}
+.num-row .num{ font-weight:900; font-size:clamp(0.75rem,1.8vw,1.1rem); color:var(--ink); flex-shrink:0; }
+
+/* Continuation tag — shown on days 2+ of a multi-day event */
+.cont-tag{
+  display:inline-flex; align-items:center; gap:2px;
+  font-size: 0.62rem; font-weight:800;
+  padding: 2px 6px; border-radius:6px;
+  color:#fff; cursor:pointer;
+  white-space:nowrap; max-width:72px;
+  overflow:hidden; text-overflow:ellipsis;
+  opacity:0.92;
+  border-left: 3px solid rgba(255,255,255,0.5);
+}
+.cont-tag.quiz{ color:#4A3400; }
+.cont-tag.other{ }
 
 /* ---------- Week / Day view ---------- */
 .week-grid{ display:grid; grid-template-columns: 60px repeat(7,minmax(0,1fr)); gap:4px; min-width:560px; }
@@ -702,16 +723,49 @@ function renderMonth(){
   const gridStart = startOfWeek(firstOfMonth);
   const dows = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   let html = '<div class="month-grid">';
-  dows.forEach(dw=> html += `<div class="dow">${dw}</div>`);
+  dows.forEach(dw => html += `<div class="dow">${dw}</div>`);
+
   for(let i=0;i<42;i++){
     const day = new Date(gridStart); day.setDate(gridStart.getDate()+i);
-    const isOther = day.getMonth()!==m;
-    const isToday = sameDay(day,NOW);
-    const dayEvents = events.filter(e=>sameDay(e.start,day) || (e.end && day>=stripTime(e.start) && day<=stripTime(e.end) && diffDays(e.start,e.end) <= 10 && e.type!=='exam-multi-skip'));
+    const isOther  = day.getMonth()!==m;
+    const isToday  = sameDay(day,NOW);
+    const dayD     = stripTime(day);
+
+    // Events that START on this day → full chip
+    const startEvts = events.filter(e => sameDay(e.start, day));
+
+    // Events that are CONTINUING through this day (started before, end on or after)
+    const contEvts  = events.filter(e =>
+      !sameDay(e.start, day) &&
+      e.end &&
+      dayD > stripTime(e.start) &&
+      dayD <= stripTime(e.end)
+    );
+
+    // Abbreviate title for continuation tag
+    function abbr(e){
+      const icon = e.type==='exam' ? '📕' : (e.type==='quiz' ? '📝' : '📌');
+      // Shorten title to ~10 chars
+      const t = e.title.length > 11 ? e.title.slice(0,10)+'…' : e.title;
+      return `${icon} ${t}`;
+    }
+
+    // Build continuation tags (max 3, rest collapsed)
+    const contTagsHtml = contEvts.slice(0,3).map(e =>
+      `<span class="cont-tag ${e.type}" style="background:${e.color};" data-idx="${events.indexOf(e)}" title="${e.title} (en cours)">${abbr(e)} →</span>`
+    ).join('') + (contEvts.length > 3 ? `<span class="cont-tag" style="background:#888;">+${contEvts.length-3}</span>` : '');
+
+    // Build full start-day chips (max 3, rest collapsed)
+    const chipsHtml = startEvts.slice(0,3).map(e =>
+      `<div class="evt-chip ${e.type}" data-idx="${events.indexOf(e)}" style="${e.type==='other'?'background:'+e.color+';':''}">${e.type==='exam'?'📕':(e.type==='quiz'?'📝':'📌')} ${e.title}</div>`
+    ).join('') + (startEvts.length > 3 ? `<div style="font-size:0.8rem;color:var(--ink-soft);">+${startEvts.length-3} autre(s)</div>` : '');
+
     html += `<div class="day-cell ${isOther?'otherMonth':''} ${isToday?'today':''}">
-      <div class="num">${day.getDate()}</div>
-      ${dayEvents.slice(0,3).map(e=>`<div class="evt-chip ${e.type}" data-idx="${events.indexOf(e)}">${e.type==='exam'?'📕':'📝'} ${e.title}</div>`).join('')}
-      ${dayEvents.length>3?`<div style="font-size:0.85rem;color:var(--ink-soft);">+${dayEvents.length-3} autre(s)</div>`:''}
+      <div class="num-row">
+        <span class="num">${day.getDate()}</span>
+        ${contTagsHtml}
+      </div>
+      ${chipsHtml}
     </div>`;
   }
   html += '</div>';
