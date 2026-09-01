@@ -234,14 +234,24 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
   font-size: clamp(0.62rem, 1.2vw, 0.82rem);
   font-weight:800;
   border-radius:7px;
-  padding: 3px 5px;
+  padding: 3px 6px 3px 4px;
   color:#fff;
   cursor:pointer;
   line-height:1.2;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  display:flex; align-items:center; gap:5px;
+}
+/* The identifying dot on the left of the chip */
+.evt-chip::before{
+  content:'';
+  display:block; flex-shrink:0;
+  width:8px; height:8px; border-radius:50%;
+  background: rgba(255,255,255,0.75);
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.35);
 }
 .evt-chip.exam{ background: var(--coral); }
 .evt-chip.quiz{ background: var(--gold); color:#4A3400; }
+.evt-chip.quiz::before{ background: rgba(0,0,0,0.18); }
 .evt-chip.other{ background: var(--teal); }
 
 /* ---------- Day number row (num + continuation dots) ---------- */
@@ -251,19 +261,21 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
 }
 .num-row .num{ font-weight:900; font-size:clamp(0.75rem,1.8vw,1.1rem); color:var(--ink); flex-shrink:0; }
 
-/* Continuation tag — shown on days 2+ of a multi-day event */
-.cont-tag{
-  display:inline-flex; align-items:center; gap:2px;
-  font-size: 0.62rem; font-weight:800;
-  padding: 2px 6px; border-radius:6px;
-  color:#fff; cursor:pointer;
-  white-space:nowrap; max-width:72px;
-  overflow:hidden; text-overflow:ellipsis;
-  opacity:0.92;
-  border-left: 3px solid rgba(255,255,255,0.5);
+/* Continuation dot — tiny circle shown beside day number on days 2+ of a multi-day event */
+.cont-dot{
+  display:inline-block;
+  width:10px; height:10px; border-radius:50%;
+  flex-shrink:0; cursor:pointer;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+  transition: transform .1s;
 }
-.cont-tag.quiz{ color:#4A3400; }
-.cont-tag.other{ }
+.cont-dot:hover{ transform: scale(1.35); }
+.cont-dot-overflow{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:14px; height:14px; border-radius:50%;
+  background:#888; color:#fff; font-size:0.5rem; font-weight:900;
+  flex-shrink:0;
+}
 
 /* ---------- Week / Day view — Google Calendar style ---------- */
 .week-view, .day-view{
@@ -849,18 +861,12 @@ function renderMonth(){
       dayD <= stripTime(e.end)
     );
 
-    // Abbreviate title for continuation tag
-    function abbr(e){
-      const icon = e.type==='exam' ? '📕' : (e.type==='quiz' ? '📝' : '📌');
-      // Shorten title to ~10 chars
-      const t = e.title.length > 11 ? e.title.slice(0,10)+'…' : e.title;
-      return `${icon} ${t}`;
-    }
 
     // Build continuation tags (max 3, rest collapsed)
-    const contTagsHtml = contEvts.slice(0,3).map(e =>
-      `<span class="cont-tag ${e.type}" style="background:${e.color};" data-idx="${events.indexOf(e)}" title="${e.title} (en cours)">${abbr(e)} →</span>`
-    ).join('') + (contEvts.length > 3 ? `<span class="cont-tag" style="background:#888;">+${contEvts.length-3}</span>` : '');
+    // Colored dots for continuing events (max 5, then +N)
+    const contTagsHtml = contEvts.slice(0,5).map(e =>
+      `<span class="cont-dot" style="background:${e.color};" data-idx="${events.indexOf(e)}" title="${e.title} (en cours)"></span>`
+    ).join('') + (contEvts.length > 5 ? `<span class="cont-dot-overflow">+${contEvts.length-5}</span>` : '');
 
     // Build full start-day chips (max 3, rest collapsed)
     const chipsHtml = startEvts.slice(0,3).map(e =>
