@@ -198,10 +198,58 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
   color: #E60000;
   font-size: 1.55rem;
 }
+.upcoming-card.is-urgent{
+  border-color: #FF0000 !important;
+  animation: urgentVibrate 0.4s ease-in-out infinite, pulseGlow 1.2s infinite !important;
+}
+@keyframes urgentVibrate {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-1.5px, 1.5px) rotate(-0.5deg); }
+  40% { transform: translate(-1.5px, -1.5px) rotate(0.5deg); }
+  60% { transform: translate(1.5px, 1.5px) rotate(0deg); }
+  80% { transform: translate(1.5px, -1.5px) rotate(-0.5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+.upcoming-card.is-done-card{
+  opacity: 0.45;
+  filter: grayscale(0.5);
+  background: #F8F9FA !important;
+  border-color: #D3D3D3 !important;
+}
+.upcoming-card.is-done-card:hover{
+  opacity: 0.75;
+  transform: none;
+}
+.finish-btn{
+  margin-top: 10px;
+  background: #16C653;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(22,198,83,0.3);
+  transition: all 0.15s ease;
+}
+.finish-btn:hover{
+  background: #13ad48;
+  transform: scale(1.02);
+}
+.finish-btn.done-btn-active{
+  background: #888;
+  box-shadow: none;
+}
 .upcoming-card .weight{
   position:absolute; top:20px; right:22px;
   font-size:1.3rem; font-weight:900; color: var(--plum);
 }
+
 
 
 /* ---------- Calendar controls ---------- */
@@ -783,12 +831,66 @@ function daysUntil(dt){
   const ms = dt - NOW;
   return Math.ceil(ms / (1000*60*60*24));
 }
+/* ============== STATE & STORAGE ============== */
+// Store user-completed events in localStorage so state persists across page reloads
+const STORAGE_KEY = 'calendrier_completed_events';
+function getCompletedEvents() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+function setCompletedEvents(arr) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  } catch (e) {}
+}
+
+function getEventKey(e) {
+  return `${e.course}_${e.title}_${e.start.getTime()}`;
+}
+
+function isEventDone(e) {
+  const completed = getCompletedEvents();
+  const key = getEventKey(e);
+  // An event is done if manually marked done OR if its deadline has already passed
+  return completed.includes(key) || (e.end && e.end < new Date());
+}
+
+function toggleEventDone(e) {
+  const completed = getCompletedEvents();
+  const key = getEventKey(e);
+  const now = new Date();
+  
+  if (completed.includes(key)) {
+    // If user unchecks, remove from completed
+    const updated = completed.filter(k => k !== key);
+    setCompletedEvents(updated);
+  } else {
+    // Confirmation before marking done
+    const title = e.title;
+    const course = e.course;
+    const isSure = window.confirm(`Es-tu sûr(e) d'avoir terminé cette évaluation ?\n\n📌 ${title} (${course})`);
+    if (!isSure) return;
+    
+    completed.push(key);
+    setCompletedEvents(completed);
+  }
+  
+  // Re-render all active views so stats, cards, and courses reflect the change immediately
+  renderUpcoming();
+  renderCalendar();
+  renderCourses();
+  renderStats();
+}
+
 function renderUpcoming(){
   const grid = document.getElementById('upcomingGrid');
   const now = new Date();
   
-  // Show events that haven't ended yet
-  const activeEvents = events.filter(e => e.end >= now || (!e.end && e.start >= now)).slice(0, 10);
+  // Show events that haven't passed their deadline, OR show them if manually done
+  const activeEvents = events.filter(e => e.end >= now || (!e.end && e.start >= now) || isEventDone(e)).slice(0, 12);
   
   if(activeEvents.length === 0){
     grid.innerHTML = '<p style="font-size:1.3rem; grid-column:1/-1; text-align:center; padding:40px 0;">Aucune évaluation à venir. Bravo, tu as tout complété ! 🎉</p>';
@@ -799,16 +901,27 @@ function renderUpcoming(){
     const isOngoing = (e.start <= now && e.end >= now);
     const msUntilStart = e.start - now;
     const msUntilEnd = e.end - now;
+    const done = isEventDone(e);
     
     let countdownText = '';
     let countdownBadgeClass = '';
+    let isUrgent = false;
     
-    if (isOngoing) {
-      const hoursLeft = Math.floor(msUntilEnd / (1000 * 60 * 60));
+    if (done) {
+      countdownText = '✅ Terminé !';
+      countdownBadgeClass = '';
+    } else if (isOngoing) {
+      const totalHoursLeft = Math.floor(msUntilEnd / (1000 * 60 * 60));
+      const hoursLeft = totalHoursLeft;
       const minsLeft = Math.floor((msUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (hoursLeft < 23) {
+        isUrgent = true;
+      }
+      
       countdownText = hoursLeft > 24 
         ? `🔥 En cours ! Reste ${Math.floor(hoursLeft/24)}j ${hoursLeft%24}h`
-        : (hoursLeft > 0 ? `🔥 En cours ! Reste ${hoursLeft}h ${minsLeft}m` : `🔥 Se termine dans ${minsLeft}m !`);
+        : (hoursLeft > 0 ? `🔥 En cours ! Reste ${hoursLeft}h ${minsLeft}m` : `🔥 Urgent ! Reste ${minsLeft}m !`);
       countdownBadgeClass = 'ongoing-live';
     } else {
       const du = Math.ceil(msUntilStart / (1000 * 60 * 60 * 24));
@@ -827,23 +940,37 @@ function renderUpcoming(){
     const tagLabel = e.type === 'exam' ? 'Examen' : (e.type === 'quiz' ? 'Quiz' : 'Activité');
     const idx = events.indexOf(e);
     
-    return `<div class="upcoming-card ${e.type} ${isOngoing ? 'is-ongoing' : ''}" data-idx="${idx}" style="cursor:pointer;" title="Clique pour plus de détails">
+    return `<div class="upcoming-card ${e.type} ${isOngoing && !done ? 'is-ongoing' : ''} ${isUrgent && !done ? 'is-urgent' : ''} ${done ? 'is-done-card' : ''}" data-card-idx="${idx}" style="cursor:pointer;" title="Clique pour voir les détails">
       <span class="weight">${e.weight}</span>
       <div style="display:flex; gap:8px; align-items:center;">
         <span class="tag">${tagLabel}</span>
-        ${isOngoing ? '<span class="live-pill">EN COURS</span>' : ''}
+        ${isOngoing && !done ? '<span class="live-pill">EN COURS</span>' : ''}
+        ${done ? '<span class="live-pill" style="background:#16C653;">COMPLÉTÉ</span>' : ''}
       </div>
       <h3>${e.title}</h3>
       <div class="course">${e.courseName} (${e.course})</div>
       <div class="when">🗓️ Du <strong>${fmtDate(e.start)}</strong><br>au <strong>${fmtDate(e.end)}</strong></div>
       <div class="countdown ${countdownBadgeClass}">${countdownText}</div>
+      
+      <button class="finish-btn ${done ? 'done-btn-active' : ''}" data-finish-idx="${idx}" onclick="event.stopPropagation();">
+        ${done ? '↩️ Marquer non terminé' : '✓ J\'ai terminé'}
+      </button>
     </div>`;
   }).join('');
   
-  // Reattach modal click handlers for upcoming cards
-  grid.querySelectorAll('[data-idx]').forEach(el => {
+  // Modal click handlers for cards (without triggering on finish button)
+  grid.querySelectorAll('[data-card-idx]').forEach(el => {
     el.addEventListener('click', () => {
-      openEvalModal(events[parseInt(el.dataset.idx)]);
+      openEvalModal(events[parseInt(el.dataset.cardIdx)]);
+    });
+  });
+  
+  // Finish button handlers
+  grid.querySelectorAll('[data-finish-idx]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.finishIdx);
+      toggleEventDone(events[idx]);
     });
   });
 }
@@ -1291,7 +1418,7 @@ function renderStats(){
   const totalEvents = events.length;
   const totalExams = events.filter(e=>e.type==='exam').length;
   const totalQuiz = events.filter(e=>e.type==='quiz').length;
-  const done = events.filter(e=>e.end < NOW).length;
+  const done = events.filter(e=>isEventDone(e)).length;
   const remaining = totalEvents - done;
 
   grid.innerHTML = `
@@ -1500,13 +1627,13 @@ function renderCourses(){
     const courseEvts  = events.filter(e=>e.course===code);
     const examsCount  = courseEvts.filter(e=>e.type==='exam').length;
     const quizCount   = courseEvts.filter(e=>e.type==='quiz').length;
-    const doneCount   = courseEvts.filter(e=>e.end < NOW).length;
+    const doneCount   = courseEvts.filter(e=>isEventDone(e)).length;
     const totalCount  = courseEvts.length;
     const pct         = totalCount>0 ? Math.round((doneCount/totalCount)*100) : 0;
     const chapCount   = meta.chapters.length;
 
-    // Next upcoming event for this course
-    const nextEvt = courseEvts.find(e=>e.start >= NOW);
+    // Next upcoming non-completed event for this course
+    const nextEvt = courseEvts.find(e=>!isEventDone(e) && e.end >= NOW);
     let nextHtml = '';
     if(nextEvt){
       const du = Math.ceil((nextEvt.start - NOW)/(1000*60*60*24));
