@@ -816,11 +816,11 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
   });
 });
 
-// Live refresh every 60 seconds so countdowns update automatically
+// Live refresh every 1 second so countdowns update live in real time!
 setInterval(()=>{
   renderUpcoming();
   renderNotifBanner();
-}, 60000);
+}, 1000);
 
 /* ============== UPCOMING ============== */
 function fmtDate(dt){
@@ -891,6 +891,29 @@ function toggleEventDone(e) {
   renderStats();
 }
 
+function formatPreciseCountdown(targetDate, fromDate) {
+  const diffMs = targetDate - fromDate;
+  if (diffMs <= 0) return "C'est l'heure !";
+  
+  const totalSec = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  
+  const parts = [];
+  if (days > 0) parts.push(`${days}j`);
+  if (hours > 0 || days > 0) parts.push(`${hours}h`);
+  parts.push(`${mins}m`);
+  
+  // If under 1 hour, also display seconds for a very dynamic live feel
+  if (days === 0 && hours === 0) {
+    parts.push(`${secs}s`);
+  }
+  
+  return parts.join(' ');
+}
+
 function renderUpcoming(){
   const grid = document.getElementById('upcomingGrid');
   const now = new Date();
@@ -905,7 +928,6 @@ function renderUpcoming(){
   
   grid.innerHTML = activeEvents.map(e => {
     const isOngoing = (e.start <= now && e.end >= now);
-    const msUntilStart = e.start - now;
     const msUntilEnd = e.end - now;
     const done = isEventDone(e);
     
@@ -917,30 +939,16 @@ function renderUpcoming(){
       countdownText = '✅ Terminé !';
       countdownBadgeClass = '';
     } else if (isOngoing) {
-      const totalHoursLeft = Math.floor(msUntilEnd / (1000 * 60 * 60));
-      const hoursLeft = totalHoursLeft;
-      const minsLeft = Math.floor((msUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
-      
+      const hoursLeft = Math.floor(msUntilEnd / (1000 * 60 * 60));
       if (hoursLeft < 23) {
         isUrgent = true;
       }
-      
-      countdownText = hoursLeft > 24 
-        ? `🔥 En cours ! Reste ${Math.floor(hoursLeft/24)}j ${hoursLeft%24}h`
-        : (hoursLeft > 0 ? `🔥 En cours ! Reste ${hoursLeft}h ${minsLeft}m` : `🔥 Urgent ! Reste ${minsLeft}m !`);
+      const timeLeftStr = formatPreciseCountdown(e.end, now);
+      countdownText = `🔥 En cours ! Reste ${timeLeftStr}`;
       countdownBadgeClass = 'ongoing-live';
     } else {
-      const du = Math.ceil(msUntilStart / (1000 * 60 * 60 * 24));
-      const totalHours = Math.floor(msUntilStart / (1000 * 60 * 60));
-      if (totalHours <= 24 && totalHours > 0) {
-        countdownText = `⏳ Dans ${totalHours}h !`;
-      } else if (du <= 0) {
-        countdownText = "⏳ C'est aujourd'hui !";
-      } else if (du === 1) {
-        countdownText = "⏳ Demain !";
-      } else {
-        countdownText = `⏳ Dans ${du} jours`;
-      }
+      const timeUntilStartStr = formatPreciseCountdown(e.start, now);
+      countdownText = `⏳ Dans ${timeUntilStartStr}`;
     }
     
     const tagLabel = e.type === 'exam' ? 'Examen' : (e.type === 'quiz' ? 'Quiz' : 'Activité');
