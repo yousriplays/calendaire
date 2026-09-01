@@ -12,9 +12,9 @@
   --ink-soft: #5B5270;
   --plum: #6B3FA0;
   --plum-deep: #4A2A73;
-  --coral: #F2684B;
-  --gold: #E8A93B;
-  --teal: #1E9E8C;
+  --coral: #FF2D2D;        /* vivid red   — exams   */
+  --gold:  #16C653;        /* vivid green — quizzes */
+  --teal:  #00B4D8;        /* vivid cyan  — today / other */
   --line: #E6DCC8;
   --danger-bg: #FFF0EC;
   --danger-ink: #B23A20;
@@ -249,10 +249,21 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
   background: rgba(255,255,255,0.75);
   box-shadow: 0 0 0 1.5px rgba(255,255,255,0.35);
 }
-.evt-chip.exam{ background: var(--coral); }
-.evt-chip.quiz{ background: var(--gold); color:#4A3400; }
-.evt-chip.quiz::before{ background: rgba(0,0,0,0.18); }
-.evt-chip.other{ background: var(--teal); }
+.evt-chip.exam{
+  background: var(--coral);
+  box-shadow: 0 0 10px rgba(255,45,45,0.55), 0 2px 6px rgba(255,45,45,0.3);
+}
+.evt-chip.quiz{
+  background: var(--gold);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(22,198,83,0.55), 0 2px 6px rgba(22,198,83,0.3);
+}
+.evt-chip.quiz::before{ background: rgba(255,255,255,0.7); }
+.evt-chip.other{
+  background: var(--teal);
+  box-shadow: 0 0 10px rgba(0,180,216,0.45);
+}
+
 
 /* ---------- Day number row (num + continuation dots) ---------- */
 .num-row{
@@ -862,10 +873,9 @@ function renderMonth(){
     );
 
 
-    // Build continuation tags (max 3, rest collapsed)
-    // Colored dots for continuing events (max 5, then +N)
+    const typeColor = e => e.type==='exam'?'#FF2D2D':e.type==='quiz'?'#16C653':'#00B4D8';
     const contTagsHtml = contEvts.slice(0,5).map(e =>
-      `<span class="cont-dot" style="background:${e.color};" data-idx="${events.indexOf(e)}" title="${e.title} (en cours)"></span>`
+      `<span class="cont-dot" style="background:${typeColor(e)};" data-idx="${events.indexOf(e)}" title="${e.title} (en cours)"></span>`
     ).join('') + (contEvts.length > 5 ? `<span class="cont-dot-overflow">+${contEvts.length-5}</span>` : '');
 
     // Build full start-day chips (max 3, rest collapsed)
