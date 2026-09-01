@@ -350,6 +350,35 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
   box-shadow: 0 0 10px rgba(0,180,216,0.45);
 }
 
+/* Done event styling — light grey across month, week, day views */
+.evt-chip.is-done-chip{
+  background: #C4C0CE !important;
+  color: #555060 !important;
+  box-shadow: none !important;
+  opacity: 0.72;
+}
+.evt-chip.is-done-chip::before{
+  background: rgba(0,0,0,0.2) !important;
+  box-shadow: none !important;
+}
+.cont-dot.is-done-dot{
+  background: #C4C0CE !important;
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.7) !important;
+  opacity: 0.75;
+}
+.wv-evt.is-done-block{
+  background: #BDB8C7 !important;
+  color: #433D4F !important;
+  box-shadow: none !important;
+  opacity: 0.65;
+  border: 1px solid #AFA9BB;
+}
+.class-chip.is-done-chip{
+  background: #C4C0CE !important;
+  color: #555060 !important;
+  opacity: 0.72;
+}
+
 
 /* ---------- Day number row (num + continuation dots) ---------- */
 .num-row{
@@ -1113,15 +1142,21 @@ function renderMonth(){
     );
 
 
-    const typeColor = e => e.type==='exam'?'#FF2D2D':e.type==='quiz'?'#16C653':'#00B4D8';
-    const contTagsHtml = contEvts.slice(0,5).map(e =>
-      `<span class="cont-dot" style="background:${typeColor(e)};" data-idx="${events.indexOf(e)}" title="${e.title} (en cours)"></span>`
-    ).join('') + (contEvts.length > 5 ? `<span class="cont-dot-overflow">+${contEvts.length-5}</span>` : '');
+    const typeColor = e => {
+      if (isEventDone(e)) return '#C4C0CE';
+      return e.type==='exam'?'#FF2D2D':e.type==='quiz'?'#16C653':'#00B4D8';
+    };
+    const contTagsHtml = contEvts.slice(0,5).map(e => {
+      const isDone = isEventDone(e);
+      return `<span class="cont-dot ${isDone ? 'is-done-dot' : ''}" style="background:${typeColor(e)};" data-idx="${events.indexOf(e)}" title="${e.title} ${isDone ? '(terminé)' : '(en cours)'}"></span>`;
+    }).join('') + (contEvts.length > 5 ? `<span class="cont-dot-overflow">+${contEvts.length-5}</span>` : '');
 
     // Build full start-day chips (max 3, rest collapsed)
-    const chipsHtml = startEvts.slice(0,3).map(e =>
-      `<div class="evt-chip ${e.type}" data-idx="${events.indexOf(e)}" style="${e.type==='other'?'background:'+e.color+';':''}">${e.type==='exam'?'📕':(e.type==='quiz'?'📝':'📌')} ${e.title}</div>`
-    ).join('') + (startEvts.length > 3 ? `<div style="font-size:0.8rem;color:var(--ink-soft);">+${startEvts.length-3} autre(s)</div>` : '');
+    const chipsHtml = startEvts.slice(0,3).map(e => {
+      const isDone = isEventDone(e);
+      const bgStyle = isDone ? '' : (e.type==='other' ? 'background:'+e.color+';' : '');
+      return `<div class="evt-chip ${e.type} ${isDone ? 'is-done-chip' : ''}" data-idx="${events.indexOf(e)}" style="${bgStyle}">${isDone ? '✓' : (e.type==='exam'?'📕':(e.type==='quiz'?'📝':'📌'))} ${e.title}</div>`;
+    }).join('') + (startEvts.length > 3 ? `<div style="font-size:0.8rem;color:var(--ink-soft);">+${startEvts.length-3} autre(s)</div>` : '');
 
     // Class chips for in-person courses on this day
     const dayClasses = classesOnDay(day);
@@ -1268,41 +1303,123 @@ function nowLinePx(){
   return pxFromTime(h,m);
 }
 
-function buildEvtBlocks(day, colW){
-  let s = '';
-  const dayEvts = events.filter(e => sameDay(e.start, day));
-  dayEvts.forEach(e => {
-    const top = pxFromTime(e.start.getHours(), e.start.getMinutes());
-    const rawH = durationPx(e.start.getHours(),e.start.getMinutes(),e.end.getHours(),e.end.getMinutes());
-    const h = Math.max(rawH, 28);
-    const icon = e.type==='exam'?'📕':(e.type==='quiz'?'📝':'📌');
-    s += `<div class="wv-evt" data-idx="${events.indexOf(e)}"
-           style="top:${top}px;height:${h}px;background:${e.color};">
-            <div class="wve-title">${icon} ${e.title}</div>
-            <div class="wve-time">${fmtH(e.start.getHours(),e.start.getMinutes())} – ${fmtH(e.end.getHours(),e.end.getMinutes())}</div>
-          </div>`;
-  });
-  return s;
-}
-
-function buildClassBlocks(day){
-  let s = '';
+function buildDayTimeBlocks(day){
+  let items = [];
+  
+  // 1. Recurring Classes
   classesOnDay(day).forEach(cs => {
     const c = courses[cs.course];
     const top = pxFromTime(cs.startH, cs.startM);
-    const h   = durationPx(cs.startH,cs.startM,cs.endH,cs.endM);
+    const bottom = pxFromTime(cs.endH, cs.endM);
     const csIdx = classSchedule.indexOf(cs);
-    s += `<div class="wv-class" data-cs="${csIdx}"
-           style="top:${top}px;height:${h}px;
-                  background:${c.color}1A;
-                  border-left-color:${c.color};">
-            <div class="wvc-name">${c.name}</div>
-            <div class="wvc-time">⏰ ${fmtH(cs.startH,cs.startM)} – ${fmtH(cs.endH,cs.endM)}</div>
-            <div class="wvc-loc">📍 ${cs.loc}</div>
-            <span class="wvc-badge" style="background:${c.color};">${cs.course}</span>
-          </div>`;
+    items.push({
+      type: 'class',
+      top: top,
+      bottom: bottom,
+      height: Math.max(bottom - top, 30),
+      csIdx: csIdx,
+      cs: cs,
+      course: cs.course,
+      color: c.color,
+      name: c.name,
+      loc: cs.loc,
+      timeStr: `${fmtH(cs.startH,cs.startM)} – ${fmtH(cs.endH,cs.endM)}`
+    });
   });
-  return s;
+  
+  // 2. Scheduled Evaluations on this day
+  const dayEvts = events.filter(e => sameDay(e.start, day));
+  dayEvts.forEach(e => {
+    const sh = e.start.getHours(), sm = e.start.getMinutes();
+    const eh = e.end ? e.end.getHours() : (sh+1), em = e.end ? e.end.getMinutes() : sm;
+    const top = pxFromTime(sh, sm);
+    // If end is on another day or much later, cap visual block height appropriately
+    let rawBottom = sameDay(e.start, e.end) ? pxFromTime(eh, em) : (top + ROW_H * 2);
+    if (rawBottom <= top) rawBottom = top + ROW_H * 1.5;
+    const bottom = Math.min(rawBottom, HOURS.length * ROW_H);
+    const height = Math.max(bottom - top, 28);
+    const eIdx = events.indexOf(e);
+    const isDone = isEventDone(e);
+    
+    items.push({
+      type: 'eval',
+      top: top,
+      bottom: bottom,
+      height: height,
+      eIdx: eIdx,
+      evt: e,
+      isDone: isDone,
+      color: e.color,
+      title: e.title,
+      icon: e.type==='exam'?'📕':(e.type==='quiz'?'📝':'📌'),
+      timeStr: `${fmtH(sh,sm)} – ${fmtH(eh,em)}`
+    });
+  });
+  
+  if (items.length === 0) return '';
+  
+  // Sort by top ascending
+  items.sort((a, b) => a.top - b.top || (b.bottom - b.top) - (a.bottom - a.top));
+  
+  // Greedy column assignment for overlapping blocks
+  let columns = []; // each column holds an array of items
+  items.forEach(item => {
+    let placed = false;
+    for (let c = 0; c < columns.length; c++) {
+      const lastInCol = columns[c][columns[c].length - 1];
+      if (lastInCol.bottom <= item.top + 2) {
+        columns[c].push(item);
+        item.colIndex = c;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      item.colIndex = columns.length;
+      columns.push([item]);
+    }
+  });
+  
+  // Calculate max concurrent columns per cluster
+  items.forEach(item => {
+    // Overlapping items with this item
+    const overlaps = items.filter(other => Math.max(item.top, other.top) < Math.min(item.bottom, other.bottom));
+    const totalCols = Math.max(...overlaps.map(o => o.colIndex + 1), columns.length > 1 ? 2 : 1);
+    item.totalCols = Math.max(totalCols, item.colIndex + 1);
+  });
+  
+  // Render HTML with smart left% and width%
+  let html = '';
+  items.forEach(item => {
+    const totalCols = item.totalCols || 1;
+    const colIndex = item.colIndex || 0;
+    const widthPct = (100 / totalCols);
+    const leftPct = (colIndex * widthPct);
+    const leftStyle = `left: calc(${leftPct}% + 2px); width: calc(${widthPct}% - 4px);`;
+    
+    if (item.type === 'class') {
+      html += `<div class="wv-class" data-cs="${item.csIdx}"
+                 style="top:${item.top}px; height:${item.height}px; ${leftStyle}
+                        background:${item.color}1A;
+                        border-left-color:${item.color};">
+                  <div class="wvc-name">${item.name}</div>
+                  <div class="wvc-time">⏰ ${item.timeStr}</div>
+                  <div class="wvc-loc">📍 ${item.loc}</div>
+                  <span class="wvc-badge" style="background:${item.color};">${item.course}</span>
+                </div>`;
+    } else {
+      const isDone = item.isDone;
+      const bg = isDone ? '#BDB8C7' : item.color;
+      html += `<div class="wv-evt ${isDone ? 'is-done-block' : ''}" data-idx="${item.eIdx}"
+                 style="top:${item.top}px; height:${item.height}px; ${leftStyle}
+                        background:${bg};">
+                  <div class="wve-title">${isDone ? '✓ ' : item.icon + ' '}${item.title}</div>
+                  <div class="wve-time">${item.timeStr}</div>
+                </div>`;
+    }
+  });
+  
+  return html;
 }
 
 /* ===== RENDER WEEK ===== */
@@ -1334,8 +1451,7 @@ function renderWeek(start){
     const nowPx = sameDay(dd,NOW) ? nowLinePx() : null;
     html += `<div class="wv-col" style="height:${totalPx}px;">
       ${buildTimeGrid(totalPx)}
-      ${buildClassBlocks(dd)}
-      ${buildEvtBlocks(dd)}
+      ${buildDayTimeBlocks(dd)}
       ${nowPx!==null ? `<div class="wv-now-line" style="top:${nowPx}px;"></div>` : ''}
     </div>`;
   });
@@ -1362,8 +1478,7 @@ function renderDay(day){
   html += `</div><div class="wv-cols">
     <div class="wv-col" style="height:${totalPx}px;">
       ${buildTimeGrid(totalPx)}
-      ${buildClassBlocks(day)}
-      ${buildEvtBlocks(day)}
+      ${buildDayTimeBlocks(day)}
       ${nowPx!==null ? `<div class="wv-now-line" style="top:${nowPx}px;"></div>` : ''}
     </div>
   </div></div></div>`;
