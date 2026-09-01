@@ -868,6 +868,12 @@ function toggleEventDone(e) {
     const updated = completed.filter(k => k !== key);
     setCompletedEvents(updated);
   } else {
+    // Do not allow finishing an event that has not yet opened
+    if (e.start > now) {
+      alert("Cette évaluation n'est pas encore ouverte !");
+      return;
+    }
+    
     // Confirmation before marking done
     const title = e.title;
     const course = e.course;
@@ -940,6 +946,22 @@ function renderUpcoming(){
     const tagLabel = e.type === 'exam' ? 'Examen' : (e.type === 'quiz' ? 'Quiz' : 'Activité');
     const idx = events.indexOf(e);
     
+    const canFinish = isOngoing || done;
+    let buttonHtml = '';
+    if (canFinish) {
+      buttonHtml = `
+        <button class="finish-btn ${done ? 'done-btn-active' : ''}" data-finish-idx="${idx}" onclick="event.stopPropagation();">
+          ${done ? '↩️ Marquer non terminé' : '✓ J\'ai terminé'}
+        </button>
+      `;
+    } else {
+      buttonHtml = `
+        <div style="margin-top:10px; font-size:0.85rem; font-weight:700; color:var(--ink-soft); display:flex; align-items:center; gap:6px;">
+          🔒 Pas encore ouvert
+        </div>
+      `;
+    }
+    
     return `<div class="upcoming-card ${e.type} ${isOngoing && !done ? 'is-ongoing' : ''} ${isUrgent && !done ? 'is-urgent' : ''} ${done ? 'is-done-card' : ''}" data-card-idx="${idx}" style="cursor:pointer;" title="Clique pour voir les détails">
       <span class="weight">${e.weight}</span>
       <div style="display:flex; gap:8px; align-items:center;">
@@ -951,10 +973,7 @@ function renderUpcoming(){
       <div class="course">${e.courseName} (${e.course})</div>
       <div class="when">🗓️ Du <strong>${fmtDate(e.start)}</strong><br>au <strong>${fmtDate(e.end)}</strong></div>
       <div class="countdown ${countdownBadgeClass}">${countdownText}</div>
-      
-      <button class="finish-btn ${done ? 'done-btn-active' : ''}" data-finish-idx="${idx}" onclick="event.stopPropagation();">
-        ${done ? '↩️ Marquer non terminé' : '✓ J\'ai terminé'}
-      </button>
+      ${buttonHtml}
     </div>`;
   }).join('');
   
