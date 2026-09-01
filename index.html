@@ -142,32 +142,67 @@ main{ padding: 0 5vw; display:flex; flex-direction:column; gap:34px; }
   overflow:hidden;
   display:flex; flex-direction:column; gap:10px;
 }
+.upcoming-card{
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.upcoming-card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(74,42,115,0.18);
+}
 .upcoming-card.exam{ border-color: var(--coral); background: linear-gradient(180deg, #FFF7F4, #FFFFFF); }
-.upcoming-card.quiz{ border-color: var(--gold); background: linear-gradient(180deg, #FFFBF0, #FFFFFF); }
+.upcoming-card.quiz{ border-color: var(--gold); background: linear-gradient(180deg, #F0FFF4, #FFFFFF); }
 .upcoming-card.other{ border-color: var(--teal); background: linear-gradient(180deg, #F0FBF9, #FFFFFF); }
+.upcoming-card.is-ongoing{
+  border-width: 3px;
+  box-shadow: 0 0 16px rgba(255,45,45,0.25);
+  animation: pulseGlow 2.5s infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(255,45,45,0.2); }
+  50% { box-shadow: 0 0 22px rgba(255,45,45,0.45); }
+}
 .upcoming-card .tag{
   align-self:flex-start;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
-  padding: 6px 16px;
+  padding: 5px 14px;
   border-radius: 100px;
   color:#fff;
 }
 .exam .tag{ background: var(--coral); }
-.quiz .tag{ background: var(--gold); color:#4A3400; }
+.quiz .tag{ background: var(--gold); color:#fff; }
 .other .tag{ background: var(--teal); }
+.live-pill{
+  font-size: 0.8rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: #FF2D2D;
+  color: #fff;
+  letter-spacing: .05em;
+  animation: blinkLive 1.5s infinite;
+}
+@keyframes blinkLive {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
 .upcoming-card h3{
   margin:0; font-size: 1.5rem; color: var(--ink);
 }
 .upcoming-card .course{ font-size: 1.1rem; color: var(--ink-soft); font-weight:700;}
-.upcoming-card .when{ font-size: 1.25rem; font-weight:800; color: var(--plum-deep); }
+.upcoming-card .when{ font-size: 1.15rem; font-weight:800; color: var(--plum-deep); line-height:1.4; }
 .upcoming-card .countdown{
-  font-size: 1.6rem; font-weight:900; color: var(--coral);
+  font-size: 1.5rem; font-weight:900; color: var(--coral);
+}
+.upcoming-card .countdown.ongoing-live{
+  color: #E60000;
+  font-size: 1.55rem;
 }
 .upcoming-card .weight{
   position:absolute; top:20px; right:22px;
   font-size:1.3rem; font-weight:900; color: var(--plum);
 }
+
 
 /* ---------- Calendar controls ---------- */
 .cal-controls{
@@ -726,11 +761,18 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
     document.getElementById('calendarSection').style.display  = btn.dataset.tab==='calendar'  ? 'block':'none';
     document.getElementById('coursesSection').style.display   = btn.dataset.tab==='courses'   ? 'block':'none';
     document.getElementById('statsSection').style.display     = btn.dataset.tab==='stats'     ? 'block':'none';
+    if(btn.dataset.tab==='upcoming') renderUpcoming();
     if(btn.dataset.tab==='calendar') renderCalendar();
     if(btn.dataset.tab==='stats')    renderStats();
     if(btn.dataset.tab==='courses')  renderCourses();
   });
 });
+
+// Live refresh every 60 seconds so countdowns update automatically
+setInterval(()=>{
+  renderUpcoming();
+  renderNotifBanner();
+}, 60000);
 
 /* ============== UPCOMING ============== */
 function fmtDate(dt){
@@ -743,23 +785,67 @@ function daysUntil(dt){
 }
 function renderUpcoming(){
   const grid = document.getElementById('upcomingGrid');
-  const upcoming = events.filter(e=>e.start >= NOW).slice(0,8);
-  if(upcoming.length===0){
-    grid.innerHTML = '<p style="font-size:1.3rem;">Aucune évaluation à venir. Bravo, tu es à jour ! 🎉</p>';
+  const now = new Date();
+  
+  // Show events that haven't ended yet
+  const activeEvents = events.filter(e => e.end >= now || (!e.end && e.start >= now)).slice(0, 10);
+  
+  if(activeEvents.length === 0){
+    grid.innerHTML = '<p style="font-size:1.3rem; grid-column:1/-1; text-align:center; padding:40px 0;">Aucune évaluation à venir. Bravo, tu as tout complété ! 🎉</p>';
     return;
   }
-  grid.innerHTML = upcoming.map(e=>{
-    const du = daysUntil(e.start);
-    const countdownText = du <= 0 ? "C'est aujourd'hui !" : (du===1? "Demain !" : `Dans ${du} jours`);
-    return `<div class="upcoming-card ${e.type}">
+  
+  grid.innerHTML = activeEvents.map(e => {
+    const isOngoing = (e.start <= now && e.end >= now);
+    const msUntilStart = e.start - now;
+    const msUntilEnd = e.end - now;
+    
+    let countdownText = '';
+    let countdownBadgeClass = '';
+    
+    if (isOngoing) {
+      const hoursLeft = Math.floor(msUntilEnd / (1000 * 60 * 60));
+      const minsLeft = Math.floor((msUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
+      countdownText = hoursLeft > 24 
+        ? `🔥 En cours ! Reste ${Math.floor(hoursLeft/24)}j ${hoursLeft%24}h`
+        : (hoursLeft > 0 ? `🔥 En cours ! Reste ${hoursLeft}h ${minsLeft}m` : `🔥 Se termine dans ${minsLeft}m !`);
+      countdownBadgeClass = 'ongoing-live';
+    } else {
+      const du = Math.ceil(msUntilStart / (1000 * 60 * 60 * 24));
+      const totalHours = Math.floor(msUntilStart / (1000 * 60 * 60));
+      if (totalHours <= 24 && totalHours > 0) {
+        countdownText = `⏳ Dans ${totalHours}h !`;
+      } else if (du <= 0) {
+        countdownText = "⏳ C'est aujourd'hui !";
+      } else if (du === 1) {
+        countdownText = "⏳ Demain !";
+      } else {
+        countdownText = `⏳ Dans ${du} jours`;
+      }
+    }
+    
+    const tagLabel = e.type === 'exam' ? 'Examen' : (e.type === 'quiz' ? 'Quiz' : 'Activité');
+    const idx = events.indexOf(e);
+    
+    return `<div class="upcoming-card ${e.type} ${isOngoing ? 'is-ongoing' : ''}" data-idx="${idx}" style="cursor:pointer;" title="Clique pour plus de détails">
       <span class="weight">${e.weight}</span>
-      <span class="tag">${e.type==='exam'?'Examen':'Quiz'}</span>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span class="tag">${tagLabel}</span>
+        ${isOngoing ? '<span class="live-pill">EN COURS</span>' : ''}
+      </div>
       <h3>${e.title}</h3>
       <div class="course">${e.courseName} (${e.course})</div>
-      <div class="when">🗓️ ${fmtDate(e.start)}</div>
-      <div class="countdown">⏳ ${countdownText}</div>
+      <div class="when">🗓️ Du <strong>${fmtDate(e.start)}</strong><br>au <strong>${fmtDate(e.end)}</strong></div>
+      <div class="countdown ${countdownBadgeClass}">${countdownText}</div>
     </div>`;
   }).join('');
+  
+  // Reattach modal click handlers for upcoming cards
+  grid.querySelectorAll('[data-idx]').forEach(el => {
+    el.addEventListener('click', () => {
+      openEvalModal(events[parseInt(el.dataset.idx)]);
+    });
+  });
 }
 
 /* ============== NOTIFICATION BANNER ============== */
